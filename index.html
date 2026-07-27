@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FitHub Connect App</title>
+    <meta
+      name="description"
+      content="Prototipo de una app móvil sencilla para reservas de clases y planes híbridos."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="phone-frame">
+        <header class="topbar">
+          <div>
+            <p class="topbar__eyebrow">FitHub Connect</p>
+            <h1>Hola, Ana</h1>
+          </div>
+          <div class="avatar">A</div>
+        </header>
+
+        <main class="content">
+          <section class="screen active" data-screen="home">
+            <div class="hero-card">
+              <p class="hero-card__label">Tu rutina de hoy</p>
+              <h2>Clase de yoga a las 18:30</h2>
+              <p>Reserva fácil, entra al gimnasio y sigue tu plan híbrido sin complicaciones.</p>
+              <div class="hero-actions">
+                <button class="btn btn--primary reserve-btn" data-action="reserve">Reservar</button>
+                <button class="btn btn--ghost" data-target="plan">Ver plan</button>
+              </div>
+            </div>
+
+            <div class="section-title">
+              <h3>Acciones rápidas</h3>
+            </div>
+            <div class="quick-grid">
+              <button class="quick-card" data-target="classes">
+                <span>🏋️</span>
+                <strong>Clases</strong>
+              </button>
+              <button class="quick-card" data-target="plan">
+                <span>📱</span>
+                <strong>Plan</strong>
+              </button>
+              <button class="quick-card" data-target="profile">
+                <span>👤</span>
+                <strong>Perfil</strong>
+              </button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="classes">
+            <div class="section-title">
+              <h3>Clases disponibles</h3>
+            </div>
+            <div class="card-list">
+              <article class="info-card">
+                <div>
+                  <h4>Yoga matutino</h4>
+                  <p>08:00 · Sala 2</p>
+                </div>
+                <button class="pill-btn" data-action="reserve">Reservar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>HIIT</h4>
+                  <p>12:30 · Gimnasio</p>
+                </div>
+                <button class="pill-btn" data-action="reserve">Reservar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>Entrenamiento en casa</h4>
+                  <p>20:00 · Video guiado</p>
+                </div>
+                <button class="pill-btn" data-action="open-plan">Abrir</button>
+              </article>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="plan">
+            <div class="section-title">
+              <h3>Tu plan híbrido</h3>
+            </div>
+            <div class="plan-card">
+              <h4>Plan Activo</h4>
+              <p>3 clases presenciales + 2 sesiones en casa por semana</p>
+              <div class="progress-bar">
+                <div class="progress-bar__fill"></div>
+              </div>
+              <small>68% completado esta semana</small>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="profile">
+            <div class="section-title">
+              <h3>Mi perfil</h3>
+            </div>
+            <div class="profile-card">
+              <h4>Membresía Plus</h4>
+              <p>Válida hasta: 24/08/2026</p>
+            </div>
+            <div class="profile-list">
+              <div class="profile-item">📍 Acceso al gimnasio</div>
+              <div class="profile-item">🔔 Recordatorios activados</div>
+              <div class="profile-item">📈 Progreso semanal</div>
+            </div>
+          </section>
+        </main>
+
+        <nav class="bottom-nav" aria-label="Navegación principal">
+          <button class="nav-btn active" data-target="home">🏠</button>
+          <button class="nav-btn" data-target="classes">🧘</button>
+          <button class="nav-btn" data-target="plan">📋</button>
+          <button class="nav-btn" data-target="profile">👤</button>
+        </nav>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
