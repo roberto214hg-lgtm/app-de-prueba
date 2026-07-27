@@ -97,6 +97,24 @@ La app no dependería de anuncios. Su monetización podría basarse en:
 - pagos mensuales de gimnasios aliados
 - membresías corporativas
 
+## Funcionalidades principales de la app
+FlexGym debe incluir las siguientes funciones para que sea realmente funcional:
+
+| Funcionalidad | Descripción |
+|---|---|
+| Registro e inicio de sesión | Permite crear cuentas seguras y acceder a la app. |
+| Recuperación de contraseña | Ayuda a los usuarios a recuperar el acceso si lo olvidan. |
+| Gestión de perfil | Permite editar datos personales, foto y metas de fitness. |
+| Acceso digital al gimnasio | Usa membresía o código QR para validar ingreso. |
+| Reserva de clases | Permite ver horarios y reservar clases disponibles. |
+| Cancelación o modificación | Permite cambiar o cancelar una reserva si es necesario. |
+| Visualización de horarios | Muestra la disponibilidad de clases y actividades. |
+| Plan híbrido | Integra rutinas presenciales y sesiones en casa. |
+| Seguimiento del progreso | Registra avances, metas y hábitos del usuario. |
+| Notificaciones | Envía recordatorios y alertas importantes. |
+| Pagos y suscripciones | Gestiona pagos mensuales y planes premium. |
+| Panel de administración | Permite al gimnasio administrar usuarios, clases y membresías. |
+
 ## Escalabilidad y proyección
 La app puede crecer con nuevas funciones como recomendaciones inteligentes, integración con wearables, más clases y contenido personalizado. A futuro podría transformarse en una plataforma completa de bienestar y fitness.
 
