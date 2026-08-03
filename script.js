@@ -19,6 +19,7 @@ const accessCodeBtn = document.getElementById('accessCodeBtn');
 const accessCodePanel = document.getElementById('accessCodePanel');
 const accessCodeValue = document.getElementById('accessCodeValue');
 const accessCodeExpiry = document.getElementById('accessCodeExpiry');
+const accessCodeQr = document.getElementById('accessCodeQr');
 const remindersToggle = document.getElementById('remindersToggle');
 const remindersIcon = document.getElementById('remindersIcon');
 const remindersLabel = document.getElementById('remindersLabel');
@@ -26,6 +27,16 @@ const logoutBtn = document.getElementById('logoutBtn');
 const membershipTitle = document.getElementById('membershipTitle');
 const membershipStatus = document.getElementById('membershipStatus');
 const membershipCta = document.getElementById('membershipCta');
+const autoRenewStatus = document.getElementById('autoRenewStatus');
+const cancelSubscriptionBtn = document.getElementById('cancelSubscriptionBtn');
+const subscriptionModal = document.getElementById('subscriptionModal');
+const subscriptionModalSummary = document.getElementById('subscriptionModalSummary');
+const subscriptionModalError = document.getElementById('subscriptionModalError');
+const cardNumber = document.getElementById('cardNumber');
+const cardExpiry = document.getElementById('cardExpiry');
+const cardCvv = document.getElementById('cardCvv');
+const confirmSubscriptionBtn = document.getElementById('confirmSubscriptionBtn');
+const cancelSubscriptionModalBtn = document.getElementById('cancelSubscriptionModalBtn');
 const paymentButtons = document.querySelectorAll('[data-pay-amount]');
 const paymentHistoryList = document.getElementById('paymentHistory');
 const paymentEmptyState = document.getElementById('paymentEmptyState');
@@ -59,19 +70,52 @@ function saveState(partialState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+let audioCtx = null;
+
+function playUiSound() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  if (!audioCtx) audioCtx = new AudioContextClass();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(880, now);
+  oscillator.frequency.exponentialRampToValueAtTime(1175, now + 0.08);
+
+  gainNode.gain.setValueAtTime(0, now);
+  gainNode.gain.linearRampToValueAtTime(0.06, now + 0.01);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.2);
+}
+
 function showToast(message) {
   if (!toast) return;
   toast.textContent = message;
   toast.classList.add('show');
   clearTimeout(window.toastTimer);
   window.toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+  playUiSound();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function getDisplayNameFromEmail(email) {
   const localPart = (email || '').split('@')[0];
   const words = localPart.replace(/[._-]+/g, ' ').trim().split(' ').filter(Boolean);
   if (words.length === 0) return 'Usuario';
-  return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  return words
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 function setUserIdentity(email) {
@@ -136,10 +180,10 @@ buttons.forEach((button) => {
 
 if (loginSubmit) {
   loginSubmit.addEventListener('click', () => {
-    const emailFilled = loginEmail && loginEmail.value.trim().length > 0;
+    const emailValid = loginEmail && isValidEmail(loginEmail.value.trim());
     const passwordFilled = loginPassword && loginPassword.value.trim().length > 0;
 
-    if (!emailFilled || !passwordFilled) {
+    if (!emailValid || !passwordFilled) {
       if (loginError) loginError.hidden = false;
       return;
     }
@@ -153,10 +197,10 @@ if (loginSubmit) {
 
 if (createAccountBtn) {
   createAccountBtn.addEventListener('click', () => {
-    const emailFilled = loginEmail && loginEmail.value.trim().length > 0;
+    const emailValid = loginEmail && isValidEmail(loginEmail.value.trim());
     const passwordFilled = loginPassword && loginPassword.value.trim().length > 0;
 
-    if (!emailFilled || !passwordFilled) {
+    if (!emailValid || !passwordFilled) {
       if (loginError) loginError.hidden = false;
       return;
     }
@@ -290,6 +334,212 @@ document.querySelectorAll('[data-action="open-plan"]').forEach((button) => {
   });
 });
 
+// --- Generador de QR autocontenido (modo byte, versiones 1-2, ECC nivel M, máscara fija 0) ---
+function qrGfMultiply(x, y) {
+  let z = 0;
+  for (let i = 7; i >= 0; i--) {
+    z = (z << 1) ^ ((z >>> 7) * 0x11d);
+    z ^= ((y >>> i) & 1) * x;
+  }
+  return z & 0xff;
+}
+
+function qrComputeDivisor(degree) {
+  const result = new Uint8Array(degree);
+  result[degree - 1] = 1;
+  let root = 1;
+  for (let i = 0; i < degree; i++) {
+    for (let j = 0; j < degree; j++) {
+      result[j] = qrGfMultiply(result[j], root);
+      if (j + 1 < degree) result[j] ^= result[j + 1];
+    }
+    root = qrGfMultiply(root, 2);
+  }
+  return result;
+}
+
+function qrComputeRemainder(dataCodewords, divisor) {
+  const result = new Uint8Array(divisor.length);
+  dataCodewords.forEach((b) => {
+    const factor = b ^ result[0];
+    result.copyWithin(0, 1);
+    result[result.length - 1] = 0;
+    for (let i = 0; i < result.length; i++) {
+      result[i] ^= qrGfMultiply(divisor[i], factor);
+    }
+  });
+  return result;
+}
+
+function qrSelectVersion(text) {
+  if (text.length <= 14) return 1;
+  if (text.length <= 26) return 2;
+  return null;
+}
+
+function qrBuildDataCodewords(text, version) {
+  const dataCapacity = version === 1 ? 16 : 28;
+  const bytes = Array.from(text, (ch) => ch.charCodeAt(0) & 0xff);
+  const bits = [];
+  const pushBits = (value, length) => {
+    for (let i = length - 1; i >= 0; i--) bits.push((value >>> i) & 1);
+  };
+
+  pushBits(0b0100, 4);
+  pushBits(bytes.length, 8);
+  bytes.forEach((b) => pushBits(b, 8));
+
+  const capacityBits = dataCapacity * 8;
+  for (let i = 0; i < 4 && bits.length < capacityBits; i++) bits.push(0);
+  while (bits.length % 8 !== 0) bits.push(0);
+
+  const padBytes = [0xec, 0x11];
+  let p = 0;
+  while (bits.length < capacityBits) {
+    pushBits(padBytes[p % 2], 8);
+    p++;
+  }
+
+  const codewords = new Uint8Array(dataCapacity);
+  for (let i = 0; i < dataCapacity; i++) {
+    let byte = 0;
+    for (let j = 0; j < 8; j++) byte = (byte << 1) | bits[i * 8 + j];
+    codewords[i] = byte;
+  }
+  return codewords;
+}
+
+function qrComputeFormatBits() {
+  const data = 0; // ECC nivel M (00) + patrón de máscara 0 (000)
+  let rem = data;
+  for (let i = 0; i < 10; i++) {
+    rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+  }
+  rem &= 0x3ff;
+  return ((data << 10) | rem) ^ 0x5412;
+}
+
+function generateQrMatrix(text) {
+  const version = qrSelectVersion(text);
+  if (!version) return null;
+
+  const dataCodewords = qrBuildDataCodewords(text, version);
+  const ecLength = version === 1 ? 10 : 16;
+  const divisor = qrComputeDivisor(ecLength);
+  const ecCodewords = qrComputeRemainder(dataCodewords, divisor);
+  const allCodewords = new Uint8Array(dataCodewords.length + ecCodewords.length);
+  allCodewords.set(dataCodewords, 0);
+  allCodewords.set(ecCodewords, dataCodewords.length);
+
+  const size = 4 * version + 17;
+  const modules = Array.from({ length: size }, () => new Uint8Array(size));
+  const isFunction = Array.from({ length: size }, () => new Uint8Array(size));
+
+  const setFn = (y, x, dark) => {
+    modules[y][x] = dark ? 1 : 0;
+    isFunction[y][x] = 1;
+  };
+
+  const drawFinder = (x0, y0) => {
+    for (let dy = -1; dy <= 7; dy++) {
+      for (let dx = -1; dx <= 7; dx++) {
+        const x = x0 + dx;
+        const y = y0 + dy;
+        if (x < 0 || x >= size || y < 0 || y >= size) continue;
+        const isBorder = dx === -1 || dx === 7 || dy === -1 || dy === 7;
+        const dark =
+          !isBorder &&
+          (dx === 0 || dx === 6 || dy === 0 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4));
+        setFn(y, x, dark);
+      }
+    }
+  };
+
+  drawFinder(0, 0);
+  drawFinder(size - 7, 0);
+  drawFinder(0, size - 7);
+
+  for (let i = 8; i < size - 8; i++) {
+    const dark = i % 2 === 0;
+    setFn(6, i, dark);
+    setFn(i, 6, dark);
+  }
+
+  setFn(size - 8, 8, true);
+
+  if (version === 2) {
+    const c = 18;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const dark = dx === -2 || dx === 2 || dy === -2 || dy === 2 || (dx === 0 && dy === 0);
+        setFn(c + dy, c + dx, dark);
+      }
+    }
+  }
+
+  const formatBits = qrComputeFormatBits();
+  const fbit = (i) => (formatBits >>> (14 - i)) & 1;
+
+  for (let i = 0; i <= 5; i++) setFn(8, i, !!fbit(i));
+  setFn(8, 7, !!fbit(6));
+  setFn(8, 8, !!fbit(7));
+  setFn(7, 8, !!fbit(8));
+  for (let i = 9; i <= 14; i++) setFn(14 - i, 8, !!fbit(i));
+
+  for (let i = 0; i <= 6; i++) setFn(size - 1 - i, 8, !!fbit(i));
+  for (let i = 7; i <= 14; i++) setFn(8, size - 15 + i, !!fbit(i));
+
+  let bitIndex = 0;
+  const totalBits = allCodewords.length * 8;
+  const getBit = (i) => (allCodewords[i >>> 3] >>> (7 - (i & 7))) & 1;
+
+  for (let right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) right = 5;
+    for (let vert = 0; vert < size; vert++) {
+      for (let j = 0; j < 2; j++) {
+        const x = right - j;
+        const upward = ((right + 1) & 2) === 0;
+        const y = upward ? size - 1 - vert : vert;
+        if (!isFunction[y][x]) {
+          let bit = 0;
+          if (bitIndex < totalBits) {
+            bit = getBit(bitIndex);
+            bitIndex++;
+          }
+          const mask = (y + x) % 2 === 0 ? 1 : 0;
+          modules[y][x] = bit ^ mask;
+        }
+      }
+    }
+  }
+
+  return { size, modules };
+}
+
+function renderQrToCanvas(canvas, text) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const result = generateQrMatrix(text);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!result) return;
+
+  const { size, modules } = result;
+  const quiet = 4;
+  const totalModules = size + quiet * 2;
+  const moduleSize = Math.floor(canvas.width / totalModules) || 1;
+  const offset = (canvas.width - moduleSize * totalModules) / 2;
+
+  ctx.fillStyle = '#0f172a';
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (modules[y][x]) {
+        ctx.fillRect(offset + (quiet + x) * moduleSize, offset + (quiet + y) * moduleSize, moduleSize, moduleSize);
+      }
+    }
+  }
+}
+
 const ACCESS_CODE_TTL_SECONDS = 30;
 let accessCodeTimer = null;
 
@@ -332,11 +582,13 @@ if (accessCodeBtn && accessCodePanel) {
     accessCodeBtn.setAttribute('aria-expanded', String(willShow));
 
     if (willShow) {
+      const code = generateAccessCode();
       if (accessCodeValue) {
-        accessCodeValue.textContent = generateAccessCode();
+        accessCodeValue.textContent = code;
         accessCodeValue.classList.remove('is-expired');
       }
       if (accessCodeExpiry) accessCodeExpiry.classList.remove('is-expired');
+      renderQrToCanvas(accessCodeQr, code);
       startAccessCodeCountdown();
       showToast('Código de acceso generado');
     } else {
@@ -350,6 +602,7 @@ function setReminders(enabled) {
   if (remindersLabel) {
     remindersLabel.textContent = enabled ? 'Recordatorios activados' : 'Recordatorios desactivados';
   }
+  if (remindersToggle) remindersToggle.dataset.enabled = String(enabled);
   saveState({ remindersEnabled: enabled });
 }
 
@@ -368,7 +621,7 @@ if (logoutBtn) {
 
 if (remindersToggle && remindersLabel) {
   remindersToggle.addEventListener('click', () => {
-    const currentlyEnabled = remindersLabel.textContent.includes('activados');
+    const currentlyEnabled = remindersToggle.dataset.enabled === 'true';
     const next = !currentlyEnabled;
     setReminders(next);
     showToast(next ? 'Recordatorios activados' : 'Recordatorios desactivados');
@@ -413,24 +666,58 @@ function renderPaymentHistory() {
 
 function renderMembership() {
   if (!membershipTitle || !membershipStatus) return;
-  const { payments = [] } = loadState();
+  const { payments = [], autoRenew } = loadState();
   const subscriptionPayments = payments.filter((payment) => payment.name.startsWith('Suscripción '));
 
-  if (subscriptionPayments.length === 0) {
-    membershipTitle.textContent = 'Sin membresía activa';
-    membershipStatus.textContent = 'Suscríbete para acceder al gimnasio';
-    if (membershipCta) membershipCta.hidden = false;
-    return;
+  if (subscriptionPayments.length > 0) {
+    const latest = subscriptionPayments[subscriptionPayments.length - 1];
+    const validUntil = new Date(latest.timestamp);
+    validUntil.setDate(validUntil.getDate() + 30);
+    const isExpired = validUntil.getTime() < Date.now();
+
+    if (isExpired && autoRenew) {
+      registerPayment(latest.name, latest.amount);
+      showToast(`Suscripción renovada automáticamente: ${latest.name}`);
+      return;
+    }
+
+    if (!isExpired) {
+      const planName = latest.name.replace('Suscripción ', '');
+      membershipTitle.textContent = `Membresía ${planName}`;
+      membershipStatus.textContent = `Válida hasta: ${validUntil.toLocaleDateString('es-ES')}`;
+      if (membershipCta) membershipCta.hidden = true;
+      if (autoRenewStatus) {
+        autoRenewStatus.hidden = false;
+        autoRenewStatus.textContent = autoRenew
+          ? 'Renovación automática: Activada'
+          : 'Renovación automática: Desactivada (no se renovará)';
+      }
+      if (cancelSubscriptionBtn) {
+        cancelSubscriptionBtn.hidden = false;
+        cancelSubscriptionBtn.dataset.autoRenew = String(!!autoRenew);
+        cancelSubscriptionBtn.textContent = autoRenew ? 'Cancelar suscripción' : 'Reactivar renovación automática';
+      }
+      return;
+    }
   }
 
-  const latest = subscriptionPayments[subscriptionPayments.length - 1];
-  const planName = latest.name.replace('Suscripción ', '');
-  const validUntil = new Date(latest.timestamp);
-  validUntil.setDate(validUntil.getDate() + 30);
+  membershipTitle.textContent = 'Sin membresía activa';
+  membershipStatus.textContent = 'Suscríbete para acceder al gimnasio';
+  if (membershipCta) membershipCta.hidden = false;
+  if (autoRenewStatus) autoRenewStatus.hidden = true;
+  if (cancelSubscriptionBtn) cancelSubscriptionBtn.hidden = true;
+}
 
-  membershipTitle.textContent = `Membresía ${planName}`;
-  membershipStatus.textContent = `Válida hasta: ${validUntil.toLocaleDateString('es-ES')}`;
-  if (membershipCta) membershipCta.hidden = true;
+if (cancelSubscriptionBtn) {
+  cancelSubscriptionBtn.addEventListener('click', () => {
+    const currentAutoRenew = cancelSubscriptionBtn.dataset.autoRenew === 'true';
+    const next = !currentAutoRenew;
+    saveState({ autoRenew: next });
+    showToast(
+      next ? 'Renovación automática reactivada' : 'Suscripción cancelada · seguirá activa hasta la fecha de vencimiento'
+    );
+    renderMembership();
+  });
 }
 
 function registerPayment(name, amount) {
@@ -447,14 +734,68 @@ function registerPayment(name, amount) {
   renderMembership();
 }
 
+let pendingSubscription = null;
+
+function openSubscriptionModal(name, amount) {
+  pendingSubscription = { name, amount };
+  if (subscriptionModalSummary) {
+    const planName = name.replace('Suscripción ', '');
+    subscriptionModalSummary.textContent = `${planName} · ${formatCurrency(amount)}/mes`;
+  }
+  if (cardNumber) cardNumber.value = '';
+  if (cardExpiry) cardExpiry.value = '';
+  if (cardCvv) cardCvv.value = '';
+  if (subscriptionModalError) subscriptionModalError.hidden = true;
+  if (subscriptionModal) subscriptionModal.classList.remove('is-hidden');
+}
+
+function closeSubscriptionModal() {
+  pendingSubscription = null;
+  if (subscriptionModal) subscriptionModal.classList.add('is-hidden');
+}
+
 paymentButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const name = button.dataset.payName;
     const amount = parseFloat(button.dataset.payAmount);
+
+    if (name.startsWith('Suscripción ')) {
+      openSubscriptionModal(name, amount);
+      return;
+    }
+
     registerPayment(name, amount);
     showToast(`Pago realizado: ${name} · ${formatCurrency(amount)}`);
   });
 });
+
+if (confirmSubscriptionBtn) {
+  confirmSubscriptionBtn.addEventListener('click', () => {
+    const numberFilled = cardNumber && cardNumber.value.trim().length > 0;
+    const expiryFilled = cardExpiry && cardExpiry.value.trim().length > 0;
+    const cvvFilled = cardCvv && cardCvv.value.trim().length > 0;
+
+    if (!numberFilled || !expiryFilled || !cvvFilled) {
+      if (subscriptionModalError) subscriptionModalError.hidden = false;
+      return;
+    }
+
+    if (pendingSubscription) {
+      const { name, amount } = pendingSubscription;
+      registerPayment(name, amount);
+      saveState({ autoRenew: true });
+      renderMembership();
+      showToast(`Pago realizado: ${name} · ${formatCurrency(amount)}`);
+    }
+    closeSubscriptionModal();
+  });
+}
+
+if (cancelSubscriptionModalBtn) {
+  cancelSubscriptionModalBtn.addEventListener('click', () => {
+    closeSubscriptionModal();
+  });
+}
 
 renderPaymentHistory();
 renderMembership();

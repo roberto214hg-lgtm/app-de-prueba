@@ -431,6 +431,13 @@ button {
   letter-spacing: 0.08em;
 }
 
+.access-code-qr {
+  display: block;
+  margin: 0 auto 0.6rem;
+  border-radius: 0.6rem;
+  background: #fff;
+}
+
 .access-code-panel small {
   display: block;
   margin-top: 0.4rem;
@@ -461,6 +468,47 @@ button {
 .nav-btn.active {
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
   color: #fff;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 16, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modal-card {
+  width: min(360px, 100%);
+  background: linear-gradient(180deg, #18253d, #0f1b2d);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 1.2rem;
+  display: grid;
+  gap: 0.8rem;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+}
+
+.modal-card h3 {
+  margin: 0;
+}
+
+.modal-summary {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.field-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.field-row .field {
+  flex: 1;
 }
 
 .toast {

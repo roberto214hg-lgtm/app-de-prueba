@@ -44,7 +44,7 @@
                 <span>Contraseña</span>
                 <input type="password" id="loginPassword" placeholder="Tu contraseña" autocomplete="current-password" />
               </label>
-              <p id="loginError" class="field-error" hidden>Completa correo y contraseña para continuar.</p>
+              <p id="loginError" class="field-error" hidden>Ingresa un correo válido y tu contraseña para continuar.</p>
               <button class="btn btn--primary full-width" id="loginSubmit">Ingresar</button>
               <button class="btn btn--ghost full-width" id="createAccountBtn" type="button">Crear cuenta</button>
             </div>
@@ -175,7 +175,9 @@
             <div class="profile-card">
               <h4 id="membershipTitle">Membresía Plus</h4>
               <p id="membershipStatus">Válida hasta: 24/08/2026</p>
+              <p class="mt-8" id="autoRenewStatus" hidden>Renovación automática: Activada</p>
               <button class="pill-btn mt-8" type="button" id="membershipCta" data-target="payments" hidden>Ver planes</button>
+              <button class="pill-btn mt-8" type="button" id="cancelSubscriptionBtn" hidden>Cancelar suscripción</button>
             </div>
             <div class="profile-list">
               <button class="profile-item" type="button" id="accessCodeBtn" aria-expanded="false" aria-controls="accessCodePanel">
@@ -183,10 +185,11 @@
               </button>
               <div class="access-code-panel" id="accessCodePanel" hidden>
                 <p>Código de acceso digital</p>
+                <canvas id="accessCodeQr" class="access-code-qr" width="132" height="132"></canvas>
                 <strong id="accessCodeValue">···· ····</strong>
                 <small id="accessCodeExpiry"></small>
               </div>
-              <button class="profile-item" type="button" id="remindersToggle">
+              <button class="profile-item" type="button" id="remindersToggle" data-enabled="true">
                 <span id="remindersIcon">🔔</span> <span id="remindersLabel">Recordatorios activados</span>
               </button>
               <button class="profile-item profile-item--progress" type="button" data-target="plan">
@@ -272,6 +275,27 @@
                 </div>
                 <button class="pill-btn" data-pay-name="Sesión con Lucía Gómez" data-pay-amount="20.00">Reservar</button>
               </article>
+              <article class="info-card">
+                <div>
+                  <h4>Miguel Torres</h4>
+                  <p>Crossfit y HIIT · $28.00/hora</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Sesión con Miguel Torres" data-pay-amount="28.00">Reservar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>Valentina Ruiz</h4>
+                  <p>Pilates y rehabilitación · $22.00/hora</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Sesión con Valentina Ruiz" data-pay-amount="22.00">Reservar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>Andrés Morales</h4>
+                  <p>Nutrición deportiva y fuerza · $30.00/hora</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Sesión con Andrés Morales" data-pay-amount="30.00">Reservar</button>
+              </article>
             </div>
 
             <div class="section-title">
@@ -294,6 +318,31 @@
     </div>
 
     <div id="toast" class="toast" aria-live="polite"></div>
+
+    <div class="modal-overlay is-hidden" id="subscriptionModal">
+      <div class="modal-card">
+        <h3>Confirmar suscripción</h3>
+        <p id="subscriptionModalSummary" class="modal-summary">Premium · $19.99/mes</p>
+        <label class="field">
+          <span>Número de tarjeta</span>
+          <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" inputmode="numeric" maxlength="19" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>Vencimiento</span>
+            <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5" />
+          </label>
+          <label class="field">
+            <span>CVV</span>
+            <input type="text" id="cardCvv" placeholder="123" inputmode="numeric" maxlength="3" />
+          </label>
+        </div>
+        <p id="subscriptionModalError" class="field-error" hidden>Completa los datos de la tarjeta para continuar.</p>
+        <button class="btn btn--primary full-width" type="button" id="confirmSubscriptionBtn">Confirmar suscripción</button>
+        <button class="btn btn--ghost full-width" type="button" id="cancelSubscriptionModalBtn">Cancelar</button>
+      </div>
+    </div>
+
     <script src="script.js"></script>
   </body>
 </html>

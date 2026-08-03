@@ -115,6 +115,24 @@ FlexGym debe incluir las siguientes funciones para que sea realmente funcional:
 | Pagos y suscripciones | Gestiona pagos mensuales y planes premium. |
 | Panel de administración | Permite al gimnasio administrar usuarios, clases y membresías. |
 
+## Estado actual del prototipo (demo interactiva)
+Ya existe un prototipo funcional en HTML, CSS y JavaScript (`index.html`, `styles.css`, `script.js`) que se puede abrir directamente en el navegador. No tiene backend real: los datos (reservas, pagos, progreso, recordatorios) se simulan y se guardan en el `localStorage` del navegador, no en una base de datos.
+
+| Módulo | Estado | Detalle |
+|---|---|---|
+| Registro e inicio de sesión | Simulado | Pide correo (con validación de formato) y contraseña en cada visita; "Crear cuenta" simula el alta. Falta recuperación de contraseña y login con Google/Facebook. |
+| Gestión de perfiles | Parcial | Se ve membresía, código de acceso y progreso semanal, y hay botón "Cerrar sesión"; falta edición de nombre, foto y metas de fitness. |
+| Membresías y acceso al gimnasio | Implementado | La membresía se activa según los pagos de suscripción y expira a los 30 días si no se renueva; código de acceso digital que rota y expira a los 30 segundos. |
+| Reservas de clases | Implementado | Filtro por horario (mañana/tarde/noche), reserva de clases, y una sección "Mis reservas" con estado Pendiente / Clase terminada; evita reservar la misma clase dos veces. |
+| Plan híbrido | Parcial | El progreso semanal (3 clases presenciales + 2 en casa) avanza automáticamente al marcar una clase reservada como terminada, y se reinicia cada semana; falta distinguir presencial vs. en casa por separado. |
+| Contenido multimedia | Pendiente | Todavía no hay reproducción de videos guiados. |
+| Notificaciones | Simulado | Hay un interruptor de "Recordatorios activados/desactivados"; no envía notificaciones push reales (eso requiere backend + Firebase Cloud Messaging). |
+| Pagos y suscripciones | Implementado | Suscripciones, pago por clase individual y por entrenador personal, con historial de pagos persistente. Es una simulación de cobro, no está conectado a Stripe ni a un procesador real. |
+| Panel administrativo | Pendiente | Aún no existe una vista para que el gimnasio administre clases, usuarios o reportes. |
+| Seguridad y privacidad | Pendiente | Al no tener backend, no hay cifrado real de datos ni control de acceso por roles. |
+
+Este prototipo sirve para validar el flujo y la experiencia de usuario. Para llevarlo a producción falta construir el backend (NestJS + PostgreSQL) descrito en la arquitectura y reemplazar `localStorage` por una base de datos con autenticación real.
+
 ## Escalabilidad y proyección
 La app puede crecer con nuevas funciones como recomendaciones inteligentes, integración con wearables, más clases y contenido personalizado. A futuro podría transformarse en una plataforma completa de bienestar y fitness.
 
