@@ -178,18 +178,41 @@ buttons.forEach((button) => {
   });
 });
 
+function findAccount(email) {
+  const { accounts = [] } = loadState();
+  return accounts.find((account) => account.email.toLowerCase() === email.toLowerCase());
+}
+
+function registerAccount(email, password) {
+  const { accounts = [] } = loadState();
+  accounts.push({ email, password });
+  saveState({ accounts });
+}
+
+function showLoginError(message) {
+  if (!loginError) return;
+  loginError.textContent = message;
+  loginError.hidden = false;
+}
+
 if (loginSubmit) {
   loginSubmit.addEventListener('click', () => {
-    const emailValid = loginEmail && isValidEmail(loginEmail.value.trim());
-    const passwordFilled = loginPassword && loginPassword.value.trim().length > 0;
+    const email = loginEmail ? loginEmail.value.trim() : '';
+    const password = loginPassword ? loginPassword.value.trim() : '';
 
-    if (!emailValid || !passwordFilled) {
-      if (loginError) loginError.hidden = false;
+    if (!isValidEmail(email) || password.length === 0) {
+      showLoginError('Ingresa un correo válido y tu contraseña para continuar.');
+      return;
+    }
+
+    const account = findAccount(email);
+    if (!account || account.password !== password) {
+      showLoginError('No existe una cuenta con ese correo y contraseña. Crea una cuenta primero.');
       return;
     }
 
     if (loginError) loginError.hidden = true;
-    setUserIdentity(loginEmail.value.trim());
+    setUserIdentity(email);
     showScreen('home');
     showToast('Sesión iniciada');
   });
@@ -197,16 +220,22 @@ if (loginSubmit) {
 
 if (createAccountBtn) {
   createAccountBtn.addEventListener('click', () => {
-    const emailValid = loginEmail && isValidEmail(loginEmail.value.trim());
-    const passwordFilled = loginPassword && loginPassword.value.trim().length > 0;
+    const email = loginEmail ? loginEmail.value.trim() : '';
+    const password = loginPassword ? loginPassword.value.trim() : '';
 
-    if (!emailValid || !passwordFilled) {
-      if (loginError) loginError.hidden = false;
+    if (!isValidEmail(email) || password.length === 0) {
+      showLoginError('Ingresa un correo válido y tu contraseña para continuar.');
       return;
     }
 
+    if (findAccount(email)) {
+      showLoginError('Ya existe una cuenta con ese correo. Inicia sesión en vez de crear una nueva.');
+      return;
+    }
+
+    registerAccount(email, password);
     if (loginError) loginError.hidden = true;
-    setUserIdentity(loginEmail.value.trim());
+    setUserIdentity(email);
     showScreen('home');
     showToast('Cuenta creada correctamente');
   });
@@ -264,7 +293,13 @@ function renderReservations() {
         completeBtn.textContent = 'Marcar tomada';
         completeBtn.addEventListener('click', () => completeReservation(reservation.id));
 
-        actions.append(badge, completeBtn);
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'pill-btn pill-btn--danger';
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = 'Cancelar reserva';
+        cancelBtn.addEventListener('click', () => cancelReservation(reservation.id));
+
+        actions.append(badge, completeBtn, cancelBtn);
         item.append(actions);
       } else {
         const badge = document.createElement('span');
@@ -299,6 +334,14 @@ function addReservation(name, time) {
   saveState({ reservations });
   renderReservations();
   showToast('Clase reservada · pendiente');
+}
+
+function cancelReservation(id) {
+  const { reservations = [] } = loadState();
+  const updated = reservations.filter((reservation) => reservation.id !== id);
+  saveState({ reservations: updated });
+  renderReservations();
+  showToast('Reserva cancelada');
 }
 
 function completeReservation(id) {
@@ -666,39 +709,31 @@ function renderPaymentHistory() {
 
 function renderMembership() {
   if (!membershipTitle || !membershipStatus) return;
-  const { payments = [], autoRenew } = loadState();
+  const { payments = [], membershipCancelled } = loadState();
   const subscriptionPayments = payments.filter((payment) => payment.name.startsWith('Suscripción '));
 
-  if (subscriptionPayments.length > 0) {
+  if (subscriptionPayments.length > 0 && !membershipCancelled) {
     const latest = subscriptionPayments[subscriptionPayments.length - 1];
     const validUntil = new Date(latest.timestamp);
     validUntil.setDate(validUntil.getDate() + 30);
     const isExpired = validUntil.getTime() < Date.now();
 
-    if (isExpired && autoRenew) {
+    if (isExpired) {
       registerPayment(latest.name, latest.amount);
       showToast(`Suscripción renovada automáticamente: ${latest.name}`);
       return;
     }
 
-    if (!isExpired) {
-      const planName = latest.name.replace('Suscripción ', '');
-      membershipTitle.textContent = `Membresía ${planName}`;
-      membershipStatus.textContent = `Válida hasta: ${validUntil.toLocaleDateString('es-ES')}`;
-      if (membershipCta) membershipCta.hidden = true;
-      if (autoRenewStatus) {
-        autoRenewStatus.hidden = false;
-        autoRenewStatus.textContent = autoRenew
-          ? 'Renovación automática: Activada'
-          : 'Renovación automática: Desactivada (no se renovará)';
-      }
-      if (cancelSubscriptionBtn) {
-        cancelSubscriptionBtn.hidden = false;
-        cancelSubscriptionBtn.dataset.autoRenew = String(!!autoRenew);
-        cancelSubscriptionBtn.textContent = autoRenew ? 'Cancelar suscripción' : 'Reactivar renovación automática';
-      }
-      return;
+    const planName = latest.name.replace('Suscripción ', '');
+    membershipTitle.textContent = `Membresía ${planName}`;
+    membershipStatus.textContent = `Válida hasta: ${validUntil.toLocaleDateString('es-ES')}`;
+    if (autoRenewStatus) {
+      autoRenewStatus.hidden = false;
+      autoRenewStatus.textContent = 'Se renueva automáticamente hasta que canceles';
     }
+    if (membershipCta) membershipCta.hidden = true;
+    if (cancelSubscriptionBtn) cancelSubscriptionBtn.hidden = false;
+    return;
   }
 
   membershipTitle.textContent = 'Sin membresía activa';
@@ -710,12 +745,8 @@ function renderMembership() {
 
 if (cancelSubscriptionBtn) {
   cancelSubscriptionBtn.addEventListener('click', () => {
-    const currentAutoRenew = cancelSubscriptionBtn.dataset.autoRenew === 'true';
-    const next = !currentAutoRenew;
-    saveState({ autoRenew: next });
-    showToast(
-      next ? 'Renovación automática reactivada' : 'Suscripción cancelada · seguirá activa hasta la fecha de vencimiento'
-    );
+    saveState({ membershipCancelled: true });
+    showToast('Suscripción cancelada');
     renderMembership();
   });
 }
@@ -782,9 +813,8 @@ if (confirmSubscriptionBtn) {
 
     if (pendingSubscription) {
       const { name, amount } = pendingSubscription;
+      saveState({ membershipCancelled: false });
       registerPayment(name, amount);
-      saveState({ autoRenew: true });
-      renderMembership();
       showToast(`Pago realizado: ${name} · ${formatCurrency(amount)}`);
     }
     closeSubscriptionModal();
