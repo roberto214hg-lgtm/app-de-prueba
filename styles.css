@@ -13,6 +13,10 @@
   box-sizing: border-box;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
@@ -215,9 +219,17 @@ button {
   font-size: 1rem;
 }
 
+.section-title h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .quick-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.7rem;
 }
 
@@ -265,6 +277,17 @@ button {
   color: var(--muted);
 }
 
+.payment-entry strong {
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .pill-btn {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
@@ -293,6 +316,36 @@ button {
   padding: 0.85rem 0.95rem;
   border-radius: 0.9rem;
   border: 1px solid var(--border);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: left;
+  color: var(--text);
+  transition: background 0.2s ease;
+}
+
+.profile-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.access-code-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed var(--border);
+  border-radius: 0.9rem;
+  padding: 0.85rem 0.95rem;
+  margin-top: -0.3rem;
+}
+
+.access-code-panel p {
+  margin: 0 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.access-code-panel strong {
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
 }
 
 .bottom-nav {

@@ -19,7 +19,7 @@
   <body>
     <div class="app-shell">
       <div class="phone-frame">
-        <header class="topbar">
+        <header class="topbar is-hidden" id="topbar">
           <div>
             <p class="topbar__eyebrow">FlexGym</p>
             <h1>Hola, Ana</h1>
@@ -46,7 +46,7 @@
               </label>
               <p id="loginError" class="field-error" hidden>Completa correo y contraseña para continuar.</p>
               <button class="btn btn--primary full-width" id="loginSubmit">Ingresar</button>
-              <button class="btn btn--ghost full-width" data-target="home">Crear cuenta</button>
+              <button class="btn btn--ghost full-width" id="createAccountBtn" type="button">Crear cuenta</button>
             </div>
           </section>
 
@@ -76,6 +76,10 @@
               <button class="quick-card" data-target="profile">
                 <span>👤</span>
                 <strong>Perfil</strong>
+              </button>
+              <button class="quick-card" data-target="payments">
+                <span>💳</span>
+                <strong>Pagos</strong>
               </button>
             </div>
           </section>
@@ -139,18 +143,107 @@
               <p>Válida hasta: 24/08/2026</p>
             </div>
             <div class="profile-list">
-              <div class="profile-item">📍 Acceso al gimnasio</div>
-              <div class="profile-item">🔔 Recordatorios activados</div>
-              <div class="profile-item">📈 Progreso semanal</div>
+              <button class="profile-item" type="button" id="accessCodeBtn" aria-expanded="false" aria-controls="accessCodePanel">
+                📍 Acceso al gimnasio
+              </button>
+              <div class="access-code-panel" id="accessCodePanel" hidden>
+                <p>Código de acceso digital</p>
+                <strong id="accessCodeValue">4821 9037</strong>
+              </div>
+              <button class="profile-item" type="button" id="remindersToggle">
+                <span id="remindersIcon">🔔</span> <span id="remindersLabel">Recordatorios activados</span>
+              </button>
+              <button class="profile-item" type="button" data-target="plan">📈 Progreso semanal</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="payments">
+            <div class="section-title">
+              <h3>Pagos y suscripciones</h3>
+            </div>
+
+            <div class="section-title">
+              <h4>Planes de suscripción</h4>
+            </div>
+            <div class="card-list">
+              <article class="info-card">
+                <div>
+                  <h4>Premium</h4>
+                  <p>Acceso ilimitado a clases · $19.99/mes</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Suscripción Premium" data-pay-amount="19.99">Suscribirse</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>Híbrido Pro</h4>
+                  <p>Clases + planes en casa · $29.99/mes</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Suscripción Híbrido Pro" data-pay-amount="29.99">Suscribirse</button>
+              </article>
+            </div>
+
+            <div class="section-title">
+              <h4>Pago por clase</h4>
+            </div>
+            <div class="card-list">
+              <article class="info-card">
+                <div>
+                  <h4>Clase de yoga</h4>
+                  <p>08:00 · Sala 2 · $8.00</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Clase de yoga" data-pay-amount="8.00">Pagar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>HIIT</h4>
+                  <p>12:30 · Gimnasio · $10.00</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Clase de HIIT" data-pay-amount="10.00">Pagar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>Entrenamiento en casa</h4>
+                  <p>Video guiado · $5.00</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Entrenamiento en casa" data-pay-amount="5.00">Pagar</button>
+              </article>
+            </div>
+
+            <div class="section-title">
+              <h4>Entrenadores personales</h4>
+            </div>
+            <div class="card-list">
+              <article class="info-card">
+                <div>
+                  <h4>Carlos Pérez</h4>
+                  <p>Fuerza y acondicionamiento · $25.00/hora</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Sesión con Carlos Pérez" data-pay-amount="25.00">Reservar</button>
+              </article>
+              <article class="info-card">
+                <div>
+                  <h4>Lucía Gómez</h4>
+                  <p>Yoga y movilidad · $20.00/hora</p>
+                </div>
+                <button class="pill-btn" data-pay-name="Sesión con Lucía Gómez" data-pay-amount="20.00">Reservar</button>
+              </article>
+            </div>
+
+            <div class="section-title">
+              <h4>Historial de pagos</h4>
+            </div>
+            <div class="card-list" id="paymentHistory">
+              <p class="empty-state" id="paymentEmptyState">Aún no tienes pagos registrados.</p>
             </div>
           </section>
         </main>
 
-        <nav class="bottom-nav" aria-label="Navegación principal">
-          <button class="nav-btn active" data-target="home" aria-label="Inicio">🏠</button>
+        <nav class="bottom-nav is-hidden" aria-label="Navegación principal">
+          <button class="nav-btn" data-target="home" aria-label="Inicio">🏠</button>
           <button class="nav-btn" data-target="classes" aria-label="Clases">🧘</button>
           <button class="nav-btn" data-target="plan" aria-label="Plan">📋</button>
           <button class="nav-btn" data-target="profile" aria-label="Perfil">👤</button>
+          <button class="nav-btn" data-target="payments" aria-label="Pagos">💳</button>
         </nav>
       </div>
     </div>
