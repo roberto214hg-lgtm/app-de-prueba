@@ -22,11 +22,11 @@
         <header class="topbar is-hidden" id="topbar">
           <div>
             <p class="topbar__eyebrow">FlexGym</p>
-            <h1>Hola, Ana</h1>
+            <h1 id="userGreeting">Hola, Ana</h1>
           </div>
           <div class="topbar__actions">
             <div class="status-pill">● Activa</div>
-            <div class="avatar">A</div>
+            <div class="avatar" id="userAvatar">A</div>
           </div>
         </header>
 
@@ -56,7 +56,7 @@
               <h2>Clase de yoga a las 18:30</h2>
               <p>Reserva fácil, entra al gimnasio y sigue tu plan híbrido sin complicaciones.</p>
               <div class="hero-actions">
-                <button class="btn btn--primary reserve-btn" data-action="reserve">Reservar</button>
+                <button class="btn btn--primary reserve-btn" data-action="reserve" data-class-name="Clase de yoga" data-class-time="18:30">Reservar</button>
                 <button class="btn btn--ghost" data-target="plan">Ver plan</button>
               </div>
             </div>
@@ -88,34 +88,68 @@
             <div class="section-title">
               <h3>Clases disponibles</h3>
             </div>
-            <div class="card-list">
-              <article class="info-card">
+            <div class="time-filter" role="tablist" aria-label="Filtrar por horario">
+              <button class="time-filter__btn active" type="button" data-time-filter="todas">Todas</button>
+              <button class="time-filter__btn" type="button" data-time-filter="manana">Mañana</button>
+              <button class="time-filter__btn" type="button" data-time-filter="tarde">Tarde</button>
+              <button class="time-filter__btn" type="button" data-time-filter="noche">Noche</button>
+            </div>
+            <div class="card-list" id="classList">
+              <article class="info-card" data-time-slot="manana">
                 <div>
                   <h4>Yoga matutino</h4>
                   <p>08:00 · Sala 2</p>
                 </div>
-                <button class="pill-btn" data-action="reserve">Reservar</button>
+                <button class="pill-btn" data-action="reserve" data-class-name="Yoga matutino" data-class-time="08:00">Reservar</button>
               </article>
-              <article class="info-card">
+              <article class="info-card" data-time-slot="manana">
+                <div>
+                  <h4>Spinning</h4>
+                  <p>09:30 · Sala 1</p>
+                </div>
+                <button class="pill-btn" data-action="reserve" data-class-name="Spinning" data-class-time="09:30">Reservar</button>
+              </article>
+              <article class="info-card" data-time-slot="tarde">
                 <div>
                   <h4>HIIT</h4>
                   <p>12:30 · Gimnasio</p>
                 </div>
-                <button class="pill-btn" data-action="reserve">Reservar</button>
+                <button class="pill-btn" data-action="reserve" data-class-name="HIIT" data-class-time="12:30">Reservar</button>
               </article>
-              <article class="info-card">
+              <article class="info-card" data-time-slot="tarde">
+                <div>
+                  <h4>Zumba</h4>
+                  <p>17:00 · Sala 2</p>
+                </div>
+                <button class="pill-btn" data-action="reserve" data-class-name="Zumba" data-class-time="17:00">Reservar</button>
+              </article>
+              <article class="info-card" data-time-slot="noche">
                 <div>
                   <h4>Entrenamiento en casa</h4>
                   <p>20:00 · Video guiado</p>
                 </div>
                 <button class="pill-btn" data-action="open-plan">Abrir</button>
               </article>
+              <article class="info-card" data-time-slot="noche">
+                <div>
+                  <h4>Pilates nocturno</h4>
+                  <p>21:30 · Sala 1</p>
+                </div>
+                <button class="pill-btn" data-action="reserve" data-class-name="Pilates nocturno" data-class-time="21:30">Reservar</button>
+              </article>
+            </div>
 
-              <div class="detail-card">
-                <h4>Próxima clase</h4>
-                <p>Yoga matutino · 8:00 AM · 12 lugares disponibles</p>
-                <button class="btn btn--primary full-width" data-action="reserve">Confirmar asistencia</button>
-              </div>
+            <div class="detail-card">
+              <h4>Próxima clase</h4>
+              <p>Yoga matutino · 8:00 AM · 12 lugares disponibles</p>
+              <button class="btn btn--primary full-width" data-action="reserve" data-class-name="Yoga matutino" data-class-time="08:00">Confirmar asistencia</button>
+            </div>
+
+            <div class="section-title">
+              <h3>Mis reservas</h3>
+            </div>
+            <div class="card-list" id="reservationList">
+              <p class="empty-state" id="reservationEmptyState">Aún no tienes clases reservadas.</p>
             </div>
           </section>
 
@@ -130,7 +164,7 @@
                 <div class="progress-bar__fill" id="progressFill" data-progress="68"></div>
               </div>
               <small id="progressText">68% completado esta semana</small>
-              <button class="btn btn--primary full-width mt-8" id="advanceProgress">Marcar sesión completada</button>
+              <p class="mt-8">Se actualiza automáticamente cuando marcas una clase reservada como terminada.</p>
             </div>
           </section>
 
@@ -139,8 +173,9 @@
               <h3>Mi perfil</h3>
             </div>
             <div class="profile-card">
-              <h4>Membresía Plus</h4>
-              <p>Válida hasta: 24/08/2026</p>
+              <h4 id="membershipTitle">Membresía Plus</h4>
+              <p id="membershipStatus">Válida hasta: 24/08/2026</p>
+              <button class="pill-btn mt-8" type="button" id="membershipCta" data-target="payments" hidden>Ver planes</button>
             </div>
             <div class="profile-list">
               <button class="profile-item" type="button" id="accessCodeBtn" aria-expanded="false" aria-controls="accessCodePanel">
@@ -148,13 +183,23 @@
               </button>
               <div class="access-code-panel" id="accessCodePanel" hidden>
                 <p>Código de acceso digital</p>
-                <strong id="accessCodeValue">4821 9037</strong>
+                <strong id="accessCodeValue">···· ····</strong>
+                <small id="accessCodeExpiry"></small>
               </div>
               <button class="profile-item" type="button" id="remindersToggle">
                 <span id="remindersIcon">🔔</span> <span id="remindersLabel">Recordatorios activados</span>
               </button>
-              <button class="profile-item" type="button" data-target="plan">📈 Progreso semanal</button>
+              <button class="profile-item profile-item--progress" type="button" data-target="plan">
+                <span class="profile-item__row">
+                  <span>📈 Progreso semanal</span>
+                  <strong id="profileProgressValue">68%</strong>
+                </span>
+                <span class="mini-progress-bar">
+                  <span class="mini-progress-bar__fill" id="profileProgressFill"></span>
+                </span>
+              </button>
             </div>
+            <button class="btn btn--ghost full-width mt-8" type="button" id="logoutBtn">Cerrar sesión</button>
           </section>
 
           <section class="screen" data-screen="payments">

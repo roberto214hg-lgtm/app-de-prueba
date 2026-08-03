@@ -250,6 +250,34 @@ button {
   font-size: 1.25rem;
 }
 
+.time-filter {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  overflow-x: auto;
+}
+
+.time-filter__btn {
+  flex: 1;
+  padding: 0.55rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.time-filter__btn.active {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .card-list,
 .profile-list {
   display: grid;
@@ -280,6 +308,31 @@ button {
 .payment-entry strong {
   color: var(--accent);
   white-space: nowrap;
+}
+
+.status-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.status-badge--pending {
+  background: rgba(139, 92, 246, 0.18);
+  color: var(--accent-2);
+}
+
+.status-badge--done {
+  background: rgba(94, 234, 212, 0.18);
+  color: var(--accent);
+}
+
+.reservation-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
 }
 
 .empty-state {
@@ -329,6 +382,36 @@ button {
   background: rgba(255, 255, 255, 0.09);
 }
 
+.profile-item--progress {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.profile-item__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.mini-progress-bar {
+  display: block;
+  height: 0.4rem;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mini-progress-bar__fill {
+  display: block;
+  width: 68%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.3s ease;
+}
+
 .access-code-panel {
   background: rgba(255, 255, 255, 0.05);
   border: 1px dashed var(--border);
@@ -346,6 +429,18 @@ button {
 .access-code-panel strong {
   font-size: 1.3rem;
   letter-spacing: 0.08em;
+}
+
+.access-code-panel small {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.access-code-panel small.is-expired,
+.access-code-panel strong.is-expired {
+  color: #fca5a5;
 }
 
 .bottom-nav {
